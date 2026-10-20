@@ -239,6 +239,15 @@ code de ce dépôt. Compléter ce fichier quand un nouveau piège est découvert
   (`structure_changed`). Une erreur passagère de `/metrics` garde les dernières valeurs.
 - Identité d'un appareil = **numéro d'emplacement** (1 à 3) : Blocky n'expose pas d'identifiant
   d'instance. Une adresse sans schéma ni port reçoit `:4000`.
+- **`autoEnableInSec` est arrondi vers le bas** (vérifié : une pause de 1 s ne le renvoie plus) :
+  dans la dernière seconde, Blocky ne donne plus d'échéance. `keepPauseEnd` garde alors l'échéance
+  connue, sinon la reprise serait attribuée à « hors de Gladys » au lieu de « fin de la pause ».
+- `POST /api/lists/refresh` répond une fois les listes téléchargées : délai de 110 s, et un délai
+  dépassé n'y marque pas le serveur injoignable.
+- Une lecture ratée (injoignable) ou un trou de plus d'une heure vide la fenêtre : la « dernière
+  heure » ne couvre jamais une panne.
+- Dans `applySuccess`, le nouvel état est posé **avant** tout `await` (événements de scène) : sinon
+  une commande arrivée pendant l'envoi d'un événement est écrasée par l'ancienne lecture.
 - Course lecture/commande : `record.generation`, comme Technitium. Après une pause, le statut est
   relu pour connaître les groupes réellement en pause.
 

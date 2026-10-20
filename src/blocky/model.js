@@ -127,7 +127,9 @@ export class HourWindow {
   add(at, metrics) {
     const sample = { at, ...Object.fromEntries(COUNTERS.map((key) => [key, metrics[key] ?? 0])) };
     const last = this.samples.at(-1);
-    if (last && COUNTERS.some((key) => sample[key] < last[key])) {
+    // A counter going down (Blocky restarted), or a gap longer than the
+    // window (no reading for an hour): the window starts again.
+    if (last && (COUNTERS.some((key) => sample[key] < last[key]) || at - last.at > this.windowMs)) {
       this.samples = [];
     }
     this.samples.push(sample);

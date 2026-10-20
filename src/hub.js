@@ -183,7 +183,14 @@ export class BlockyHub {
         this.records.set(server.slot, this.newRecord(server, config));
       }
     }
-    await this.publishDevices();
+    try {
+      await this.publishDevices();
+    } catch (err) {
+      // Gladys refused the discovery: keep reading the servers anyway (scene
+      // events, widget); the devices go again at the next structure change,
+      // search or reconnection.
+      this.problem('devices', `Discovered devices refused: ${err.message}`);
+    }
     await this.pollAll();
     this.schedulePoll();
   }
@@ -363,25 +370,33 @@ export class BlockyHub {
       return false;
     }
     let widgetChanged = record.snapshot.reachable !== true || record.error !== null;
-    if (record.down) {
-      const downMinutes = Math.round((this.now() - record.downSince) / 60_000);
-      logger.info(`${this.label(record)} answers again after ${downMinutes} min`);
-      await this.fire(TRIGGERS.RECOVERED, record, { down_minutes: downMinutes });
-    } else if (record.error) {
-      logger.info(`${this.label(record)}: connection restored`);
-    } else if (record.snapshot.reachable === null) {
-      logger.info(`${this.label(record)}: connected`);
-    }
+    // The new snapshot is set before any await: a command or a read that
+    // runs while a scene event is being sent must see it, not the old one.
+    const previous = record.snapshot;
+    const wasDown = record.down;
+    const downSince = record.downSince;
+    const hadError = record.error;
+    record.snapshot = { reachable: true, ...next };
     record.failures = 0;
     record.down = false;
     record.downSince = null;
     record.error = null;
+    if (wasDown) {
+      const downMinutes = Math.round((this.now() - downSince) / 60_000);
+      logger.info(`${this.label(record)} answers again after ${downMinutes} min`);
+      await this.fire(TRIGGERS.RECOVERED, record, { down_minutes: downMinutes });
+    } else if (hadError) {
+      logger.info(`${this.label(record)}: connection restored`);
+    } else if (previous.reachable === null) {
+      logger.info(`${this.label(record)}: connected`);
+    }
 
-    const previous = record.snapshot;
     widgetChanged ||= previous.blocking !== next.blocking;
+    this.keepPauseEnd(record, previous, next, origin);
     await this.blockingTransition(record, previous, next, origin);
-
-    record.snapshot = { reachable: true, ...next };
+    if (record.dropped) {
+      return false;
+    }
     this.schedulePauseEnd(record);
     if (this.metricsPublished.get(record.server.slot) !== Boolean(next.metrics)) {
       // Prometheus was turned on or off in Blocky: the device gains or loses
@@ -412,8 +427,13 @@ export class BlockyHub {
       return wasError !== err.kind;
     }
     record.failures += 1;
+    // A failed reading leaves a hole: the last hour starts again afterwards,
+    // rather than spanning the outage.
+    record.window.reset();
     if (record.failures === 1) {
-      record.downSince = this.now();
+      if (!record.down) {
+        record.downSince = this.now();
+      }
       this.scheduleRetry(record);
     }
     if (!record.down && record.failures >= this.timings.downAfterFailures) {
@@ -457,6 +477,26 @@ export class BlockyHub {
         .catch((err) => this.problem('pause-end', 'Pause end check failed', err, 'error'));
     }, delay);
     record.pauseTimer.unref?.();
+  }
+
+  /**
+   * Blocky rounds the time left down to whole seconds: in the last second of
+   * a pause it reports none. Keep the known end then, so the widget, the
+   * pause-end read and the "end of the pause" origin stay right. A pause
+   * changed to "until enabled" earlier than that is not one.
+   */
+  keepPauseEnd(record, previous, next, origin) {
+    if (
+      next.blocking === 'disabled' &&
+      next.pauseEndsAt === null &&
+      previous.blocking === 'disabled' &&
+      origin !== ORIGINS.GLADYS &&
+      previous.pauseEndsAt !== null &&
+      Math.abs(previous.pauseEndsAt - this.now()) <= 1_000 + this.timings.pauseEndSlackMs
+    ) {
+      next.pauseEndsAt = previous.pauseEndsAt;
+      record.snapshot.pauseEndsAt = previous.pauseEndsAt;
+    }
   }
 
   async blockingTransition(record, previous, next, origin) {
@@ -633,7 +673,7 @@ export class BlockyHub {
   }
 
   /** Run `command` on each targeted server; resolves with the records that accepted. */
-  async onServers(deviceExternalId, describe, command) {
+  async onServers(deviceExternalId, describe, command, { countsAsDown = true } = {}) {
     const records = this.targets(deviceExternalId);
     const results = await Promise.all(
       records.map(async (record) => {
@@ -648,7 +688,7 @@ export class BlockyHub {
           logger.warn(`${this.label(record)}: ${describe} failed: ${err.message}`);
           // A refused command (unknown group…) says nothing about the server
           // being reachable: only silence changes its state.
-          if (err.kind === ERROR_KINDS.UNREACHABLE) {
+          if (err.kind === ERROR_KINDS.UNREACHABLE && countsAsDown) {
             await this.applyFailure(record, err);
           }
           return err;
@@ -725,8 +765,13 @@ export class BlockyHub {
 
   /** Download the deny and allow lists of the targeted servers again. */
   async refreshLists(deviceExternalId) {
-    const done = await this.onServers(deviceExternalId, 'lists refreshed', (record) =>
-      record.client.refreshLists(),
+    const done = await this.onServers(
+      deviceExternalId,
+      'lists refreshed',
+      (record) => record.client.refreshLists(),
+      // Blocky answers once the lists are downloaded: a slow download is not
+      // a server down.
+      { countsAsDown: false },
     );
     // The new list sizes show at the next reading: read now.
     await Promise.all(done.map((record) => this.poll(record)));

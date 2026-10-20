@@ -67,10 +67,10 @@ export const TEXT = {
     es: 'Para las estadísticas, active prometheus en la configuración de Blocky.',
   },
   tooSoon: {
-    en: 'Statistics in a minute…',
-    fr: 'Statistiques dans une minute…',
-    de: 'Statistiken in einer Minute…',
-    es: 'Estadísticas en un minuto…',
+    en: 'Statistics after the next reading…',
+    fr: 'Statistiques après la prochaine lecture…',
+    de: 'Statistiken nach der nächsten Abfrage…',
+    es: 'Estadísticas tras la próxima lectura…',
   },
   updateGladys: {
     en: 'Update Gladys to 5.2.0 or later to choose the duration of a pause.',
@@ -206,7 +206,9 @@ export function totals(records) {
     // Each server has its own cache: the average of the rates.
     cacheHitRate: rates.length ? rates.reduce((a, b) => a + b, 0) / rates.length : null,
     // The servers of a pair usually share their lists: the largest, not the sum.
-    blockedDomains: Math.max(...answering.map((r) => r.snapshot.metrics?.denylistEntries ?? 0)),
+    blockedDomains: answering.some((r) => typeof r.snapshot.metrics?.denylistEntries === 'number')
+      ? Math.max(...answering.map((r) => r.snapshot.metrics?.denylistEntries ?? 0))
+      : null,
   };
 }
 
@@ -337,7 +339,9 @@ async function get(hub, { settings, language = 'en' }) {
     if (sums.cacheHitRate !== null) {
       items.push(neutral(TEXT.cache, 'zap', `${Math.round(sums.cacheHitRate)} %`));
     }
-    items.push(neutral(TEXT.domains, 'list', sums.blockedDomains));
+    if (sums.blockedDomains !== null) {
+      items.push(neutral(TEXT.domains, 'list', sums.blockedDomains));
+    }
   }
   components.push({ type: 'status', items: items.slice(0, 10) });
   components.push(...buttons(records, language));

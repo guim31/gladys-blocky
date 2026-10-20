@@ -99,7 +99,10 @@ export class BlockyClient {
    * @param {string} path e.g. `/api/blocking/status`
    * @param {object} [options] { method, query, accept }
    */
-  async call(path, { method = 'GET', query = {}, accept = 'application/json' } = {}) {
+  async call(
+    path,
+    { method = 'GET', query = {}, accept = 'application/json', timeoutMs = this.timeoutMs } = {},
+  ) {
     const search = new URLSearchParams(
       Object.entries(query).map(([key, value]) => [key, String(value)]),
     ).toString();
@@ -109,7 +112,7 @@ export class BlockyClient {
         method,
         headers: { accept },
         insecure: this.insecure,
-        timeoutMs: this.timeoutMs,
+        timeoutMs,
       });
     } catch (err) {
       throw networkError(err);
@@ -208,9 +211,12 @@ export class BlockyClient {
     await this.call('/api/blocking/disable', { query });
   }
 
-  /** Downloads the allow and deny lists again. */
+  /**
+   * Downloads the allow and deny lists again. Blocky answers once they are
+   * loaded: big lists take a while (the scene action allows 120 s).
+   */
   async refreshLists() {
-    await this.call('/api/lists/refresh', { method: 'POST' });
+    await this.call('/api/lists/refresh', { method: 'POST', timeoutMs: 110_000 });
   }
 
   /** Empties the DNS cache. */

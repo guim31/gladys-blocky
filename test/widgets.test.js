@@ -150,7 +150,7 @@ test('two servers: summed figures, one row each, the groups of a partial pause',
 
 test('no statistics yet, or none at all: a text says why', async (t) => {
   const w = await world(t, { warm: false });
-  assert.match(ofType(await content(w), 'text')[0].text, /Statistics in a minute/);
+  assert.match(ofType(await content(w), 'text')[0].text, /Statistics after the next reading/);
   const off = await world(t, {
     warm: false,
     servers: (clock) => ({ [URL_1]: new FakeBlocky({ now: clock.now, metrics: false }) }),

@@ -166,10 +166,10 @@ export const ACTION_TEXT = {
     es: 'Sin estadísticas: active prometheus en la configuración de Blocky.',
   },
   tooSoon: {
-    en: 'Statistics not ready yet: try again in a minute.',
-    fr: 'Statistiques pas encore prêtes : réessayez dans une minute.',
-    de: 'Statistiken noch nicht bereit: Versuche es in einer Minute erneut.',
-    es: 'Estadísticas aún no disponibles: inténtelo de nuevo en un minuto.',
+    en: 'Statistics not ready yet: try again after the next reading.',
+    fr: 'Statistiques pas encore prêtes : réessayez après la prochaine lecture.',
+    de: 'Statistiken noch nicht bereit: Versuche es nach der nächsten Abfrage erneut.',
+    es: 'Estadísticas aún no disponibles: inténtelo de nuevo tras la próxima lectura.',
   },
 };
 

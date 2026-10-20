@@ -92,6 +92,53 @@ test('Blocky restarted: its counters start again, no negative figures', async (t
   assert.equal(state(w, 'queries_last_hour'), 7);
 });
 
+test('after an outage, the last hour starts again instead of spanning it', async (t) => {
+  const w = await world(t);
+  await warmUp(w);
+  w.server.online = false;
+  await w.hub.pollAll();
+  w.clock.advance(3 * 60 * 60_000);
+  w.server.traffic({ queries: 5000 });
+  w.server.online = true;
+  await w.hub.pollAll();
+  assert.equal(w.hub.records.get(1).snapshot.hour, null, 'one reading since the outage');
+  w.clock.advance(60_000);
+  w.server.traffic({ queries: 12 });
+  await w.hub.pollAll();
+  assert.equal(state(w, 'queries_last_hour'), 12);
+});
+
+test('the last second of a pause, reported without time left, still ends as a pause', async (t) => {
+  const w = await world(t);
+  w.server.disable(1);
+  await w.hub.pollAll();
+  w.clock.advance(59_500);
+  await w.hub.pollAll();
+  assert.ok(w.hub.records.get(1).snapshot.pauseEndsAt, 'the end is kept');
+  w.clock.advance(1_000);
+  await w.hub.pollAll();
+  assert.equal(events(w, TRIGGERS.RESUMED).at(-1).data.origin, ORIGINS.TIMER);
+});
+
+test('the length of an outage survives another error in the middle', async (t) => {
+  const w = await world(t);
+  w.server.online = false;
+  await w.hub.pollAll();
+  w.clock.advance(15_000);
+  await w.hub.pollAll();
+  w.clock.advance(5 * 60_000);
+  w.server.online = true;
+  w.server.kind = 'other';
+  await w.hub.pollAll();
+  w.server.kind = 'blocky';
+  w.server.online = false;
+  w.clock.advance(60_000);
+  await w.hub.pollAll();
+  w.server.online = true;
+  await w.hub.pollAll();
+  assert.equal(events(w, TRIGGERS.RECOVERED).at(-1).data.down_minutes, 6);
+});
+
 test('a server without name is named after its address', async (t) => {
   const w = await world(t, { config: { server_1_url: '192.0.2.10' } });
   assert.equal(w.fake.discoveredDevices[0].name, 'Blocky 192.0.2.10:4000');
@@ -113,7 +160,7 @@ test('without Prometheus: the switch only, and the statistics once it is on', as
   await w.hub.pollAll();
   assert.equal(w.fake.discoveredDevices[0].features.length, 7, 'published again');
   const tooSoon = await w.fake.sceneAction('read_statistics', {});
-  assert.equal(tooSoon.error, 'Statistics not ready yet: try again in a minute.');
+  assert.equal(tooSoon.error, 'Statistics not ready yet: try again after the next reading.');
 });
 
 test('a passing metrics error keeps the features and the last figures', async (t) => {
