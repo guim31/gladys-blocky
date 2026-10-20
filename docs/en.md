@@ -1,61 +1,189 @@
-# Demo Devices Template
+# Blocky
 
-This is the user documentation of the integration. Gladys re-hosts this file
-and shows a permanent **Documentation** link to it in the Configuration screen
-(in the user's language, with English as the fallback) — it is when
-configuring that the user needs it most. Keep the short onboarding hints in
-the `section` blocks of the manifest `config_schema`; put the long
-step-by-step (screenshots, troubleshooting…) here.
+Follow and control your [Blocky](https://0xerr0r.github.io/blocky/) DNS proxy
+and ad blocker from Gladys, over your local network: pause its blocking for
+five minutes from the dashboard when a website breaks, pause only some groups
+of block lists from a scene, refresh the lists, see its queries of the last
+hour, and know when it stops answering.
 
-## What you get
+> **Tested against a real Blocky v0.35** (the official Docker image), not yet
+> with a real Gladys installation: feedback welcome. If something does not work
+> as described, please say so on the
+> [Gladys forum](https://community.gladysassistant.com) or in the
+> [issues](https://github.com/guim31/gladys-blocky/issues).
 
-Six demo devices show up after installation: a weather station (real data
-from Open-Meteo), a switch, a dimmable light, a smart plug with power
-metering, a motion sensor and a camera.
+## What you need
 
-## Configuration
+- Gladys Assistant 5.1.0 or later (5.2.0 or later for the _Pause…_ button of
+  the widget).
+- **Blocky** with its HTTP port open to Gladys (`ports: http: 4000` in
+  `config.yml`). The REST API of Blocky has no password: Gladys reaches it
+  directly, like the `blocky` command does.
+- For the statistics, the **Prometheus** endpoint of Blocky turned on:
 
-1. Open the **Configuration** tab of the integration.
-2. Set the **latitude** and **longitude** the demo weather station should
-   observe (they default to Paris), and pick your temperature unit.
-   The **refresh interval** sets how often the weather station and the
-   plug's power are read: every 5 minutes by default, every minute at most.
-3. Save: the devices appear in the **Discovery** tab, ready to be added.
+```yaml
+prometheus:
+  enable: true
+```
 
-The **Prefer the local connection** toggle drives the demo plug: it reports
-the channel it actually uses as a badge (local or cloud), with an orange dot
-when it runs degraded (local refused, cloud fallback).
+Without it, the device only has the blocking switch, and the widget only the
+state and the buttons.
 
-## Actions
+## Set up
 
-- **Test the weather provider** — performs a live request to Open-Meteo and
-  shows the current temperature and humidity under the button.
-- **Identify a device** — pick one of your devices in the list and it will
-  signal itself (the demo light "blinks" in the logs).
+1. Install the integration from the Gladys catalog.
+2. In **Configuration**, enter the **Address** of your server (for example
+   `192.168.1.2`: port 4000 is added; or a full address such as
+   `http://192.168.1.2:4000` or `https://dns.example.net`), and optionally a
+   **Name**. Two or three servers? Fill in the _Second server_ and _Third
+   server_ sections too.
+3. Save, then click **Test the connection**: the message under the button says,
+   for each server, whether it answers, its version, the state of its blocking
+   and whether the statistics are on.
+4. Open the **Discover** tab: one device per server. Click **Add**, pick a
+   room, save.
 
-## Scenes
+Options:
 
-The integration adds its own cards to the scene editor (Gladys 5.1 or
-later), under the **Integrations** category:
+- **Accept self-signed certificates**: for an `https://` address (the HTTPS
+  port of Blocky) whose certificate is self-signed. Leave it off for `http://`
+  addresses.
+- **Refresh interval**: how often the servers are read, from 30 seconds
+  (default) to 5 minutes.
+- **Turning the blocking switch off**: what the switch of the device does when
+  you turn it off: pause the blocking for 5 minutes (default), 15, 30 or 60
+  minutes, or disable it until you turn it back on.
+- **Language of the feature names**: English, French, German or Spanish. The
+  names are given when a device is added (French by default).
 
-- **Motion detected** (trigger) — starts the scene when a demo motion sensor
-  sees something move. Optionally pick the sensor and what moved (person,
-  animal); left empty, any detection matches. The following actions can
-  read what moved with `{{triggerEvent.data.target}}`.
-- **Identify a device** (action) — makes the chosen device signal itself.
-  It returns whether the device could signal itself, so the following
-  actions can depend on it.
+## The device of each server
+
+| Feature                     | What it is                                                                |
+| --------------------------- | ------------------------------------------------------------------------- |
+| Blocking                    | Switch: on, Blocky blocks the listed domains; off, it lets all in         |
+| DNS queries (last hour)     | Queries received over the last 60 minutes                                 |
+| Blocked queries (last hour) | Queries blocked over the last 60 minutes                                  |
+| Share blocked (last hour)   | Share of the queries blocked, in %, rounded                               |
+| Cache hit rate (last hour)  | Share of the queries sent upstream that the cache answered, in %, rounded |
+| Blocked domains             | Entries of the deny lists, all groups together                            |
+| Version                     | The installed version of Blocky                                           |
+
+All features but _Blocking_ come from the Prometheus endpoint. Blocky counts
+since it started; the integration computes the last hour from two readings an
+hour apart. Just after Gladys, the integration or Blocky starts, the figures
+appear after the second reading and cover a shorter time, up to an hour.
+Turning Prometheus on or off adds or removes these features: Gladys then
+offers to **Update** the device in the Discover tab.
+
+The switch reads **off** as soon as Blocky reports its blocking as disabled,
+also when only some groups are paused. When a pause has a length, Blocky turns
+the blocking back on by itself at the end, and the switch follows. The badge of
+the device shows **Local** when the server answers and **Unreachable** when it
+does not.
 
 ## Dashboard
 
-Add the **Demo status** widget to a dashboard: it shows the live
-temperature of the weather station and the power of the office plug, the
-connection the plug currently uses (orange when degraded) and the observed
-location. Its **Identify the light** button makes the demo light signal
-itself.
+Add the **Blocky** widget to a dashboard. By default it shows all your servers
+together; choose one in its settings to show only that one. Pausing a single
+server out of two changes nothing: your devices then ask the other one.
+
+The widget shows the queries, the blocked queries and the share blocked over
+the last hour, the state of each server (blocking, paused with the minutes
+left, disabled, unreachable), the groups of a pause that does not cover all
+of them, the cache hit rate and the blocked domains. Its buttons:
+
+- **Pause 5 min** and **Pause 30 min**: pause the whole blocking right away;
+- **Pause…**: opens a small form to type the duration in minutes (Gladys 5.2.0
+  or later; an older Gladys answers that it needs an update);
+- **Resume**: turns the blocking back on. It shows a check mark while the
+  blocking is on everywhere.
+
+## Scenes
+
+### Triggers
+
+- **Blocky blocking paused**: the blocking was turned off, from Gladys or from
+  elsewhere (the `blocky` command, another tool). Filter by server and by
+  origin (_From Gladys_ or _Outside Gladys_). The actions can read the name of
+  the server, the length of the pause in minutes (`duration_minutes`, 0 when
+  it has no end) and the groups paused (`groups`; a pause of the whole
+  blocking lists every group, plus `default`).
+- **Blocky blocking resumed**: the blocking is on again. The origin tells
+  whether the pause ended on its own (_End of the pause_), from Gladys or from
+  elsewhere; `paused_minutes` says how long it lasted.
+- **Blocky no longer answers**: a server did not answer two reads in a row
+  (the second one 15 seconds after the first). The DNS of your home may be
+  down. `error` says why, in the language of the configuration.
+- **Blocky answers again**: it is back; `down_minutes` says after how long.
+
+### Actions
+
+- **Pause Blocky blocking**: pauses the blocking on one server, or on all of
+  them when the field is left empty, for a number of minutes (5 by default, 0
+  until resumed, one day at most). **Groups**: leave it empty to pause the
+  whole blocking, or type the names of groups of your `denylists`, separated
+  by commas (for example `ads`), to pause only those. A new pause replaces the
+  running one. The following actions can read how many servers were paused.
+- **Resume Blocky blocking**: turns the blocking back on, on one server or all
+  of them.
+- **Refresh the Blocky lists**: downloads the deny and allow lists again now,
+  for example after editing a list file.
+- **Flush the Blocky DNS cache**: empties the DNS cache, for example after
+  changing a record, so the next queries are answered afresh.
+- **Read the Blocky statistics**: reads the queries of the last hour into a
+  sentence, such as "In the last hour, 1,234 DNS queries, 123 blocked (10 %).",
+  in the language of the configuration. The following actions can send it
+  (`sentence`) or use the figures (`queries_last_hour`, `blocked_last_hour`,
+  `blocked_percent`, `blocking_enabled`). Needs the Prometheus endpoint.
+
+The _Blocking_ switch can also be used with the standard Gladys action that
+controls a device.
+
+### Scene ideas
+
+- **Game time**: every Wednesday at 14:00, _Pause Blocky blocking_ for 120
+  minutes with the group `games`: the game sites open for two hours, the ads
+  stay blocked, and the blocking comes back on its own.
+- **DNS alert**: _Blocky no longer answers_ → send a message "Blocky
+  {{triggerEvent.data.server}} does not answer: {{triggerEvent.data.error}}".
+  And _Blocky answers again_ → "back after
+  {{triggerEvent.data.down_minutes}} min".
+- **Safety net**: a scene every evening at 20:00 with _Resume Blocky
+  blocking_, so a switch turned off "until turned back on" never stays off all
+  night.
 
 ## Troubleshooting
 
-The integration logs everything it does: check the integration logs from the
-Gladys UI (or `docker logs` on the host) with `LOG_LEVEL=debug` for the full
-detail.
+- **"no Blocky API at this address"**: something else answers there, or the
+  port is the DNS one. Enter the HTTP port of Blocky (`ports: http:` in
+  `config.yml`, often 4000): `192.168.1.2`, or `http://192.168.1.2:4000`.
+- **"unknown group"**: the _Groups_ field of the pause names a group that is
+  not in the `denylists` of `config.yml` (names are case-sensitive).
+- **No statistics**: turn on `prometheus: enable: true` in `config.yml`, then
+  restart Blocky. _Test the connection_ says "statistics on" once it works.
+- **"certificate refused"**: you entered an `https://` address; tick _Accept
+  self-signed certificates_, or use the `http://` address.
+- **"the address redirects"**: enter the `https://` address.
+- **"a password protects this address"**: a reverse proxy with a login stands
+  in front of Blocky; give Gladys the direct address of Blocky instead.
+- **"does not answer"**: check that `http://<address>:4000/api/blocking/status`
+  opens from a computer on the network of Gladys. Names ending in `.local`
+  usually do not work inside the integration: use the IP address.
+- Logs: on the page of the integration in Gladys, or `docker logs` on the host.
+  They show the start, each server lost and back, the problems (once each, not
+  at every reading) and your commands. Start the container with
+  `LOG_LEVEL=debug` to see every reading and every retry.
+
+## Limits
+
+- One integration handles up to three servers. Blocky instances that share
+  their state through Redis pause together: pausing one is enough.
+- The integration reads each server once per refresh interval (two small
+  requests: the blocking status and the Prometheus page): no quota is at risk.
+- The figures are those of the last hour only; Gladys keeps their history.
+- The shares are rounded in the device (Gladys has no decimal percentage
+  sensor); the widget shows one decimal for the share blocked.
+- The integration does not edit the lists, the groups of clients nor the
+  configuration of Blocky: use `config.yml` for that.
+
+This integration is not affiliated with Blocky or its authors.

@@ -16,8 +16,8 @@ its only runtime dependency. It started from the official JavaScript template.
 ```bash
 npm install
 npm test                                  # node --test, the built-in runner
-node --test test/devices.test.js          # one file
-node --test --test-name-pattern "plug"    # tests whose name matches
+node --test test/hub.test.js              # one file
+node --test --test-name-pattern "pause"   # tests whose name matches
 npm run lint                              # ESLint
 npm run format:check                      # Prettier, as the CI runs it
 npm run format                            # Prettier, fix in place
@@ -31,16 +31,21 @@ pushing.
 ## Architecture
 
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
+index.js                          SDK wiring only: src/app.js registers the handlers before connect()
+src/app.js                        every SDK handler -> the hub (also used by the tests)
+src/hub.js                        servers, reading timer, states, transitions -> scene events, commands, deduplicated logs
+src/devices.js                    one device per configured server: features, names (4 languages), values
+src/blocky/client.js              Blocky REST API client (no auth): status, pause by group, lists, cache, /metrics
+src/blocky/http.js                node:http/https request (self-signed certificates on request)
+src/blocky/model.js               reading the status, the Prometheus page, the window of the last hour
 src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+src/widgets.js                    dashboard widget `blocky` (manifest `widgets`)
+src/texts.js                      connection, error, report, statistics and action texts (4 languages)
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
 gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (en and fr mandatory)
 test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+                                  and helpers/fakeBlocky.js (built from test/fixtures/blocky/real)
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -70,8 +75,10 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** exists in English, French, German and Spanish: action
+  messages, widget content, feature names, manifest texts, and
+  `docs/en.md`, `docs/fr.md`, `docs/de.md`, `docs/es.md`, kept in sync
+  (`test/i18n.test.js` checks the languages and the doc sections).
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
@@ -197,6 +204,43 @@ code de ce dépôt. Compléter ce fichier quand un nouveau piège est découvert
 - Les filtres de scène ne font qu'égalité et appartenance : un seuil reste le travail d'un capteur.
 - **Les clés de widgets, de déclencheurs et d'actions sont figées une fois publiées.**
 - `gladys_version` `>=5.1.0` dès qu'il y a widgets, déclencheurs ou actions de scène.
+
+## Blocky (propre à ce dépôt)
+
+- **API REST** de Blocky (https://0xerr0r.github.io/blocky/), vérifiée sur un vrai **v0.35.0**
+  (image Docker `spx01/blocky`, réseau Docker isolé, 20/10/2026). Réponses réelles dans
+  `test/fixtures/blocky/real/` (adresse du client anonymisée). Architecture reprise de
+  `guim31/gladys-technitium` (mêmes clés de déclencheurs, d'actions et de boutons).
+- **Aucune authentification** : l'API écoute sur le port HTTP (`ports.http`, 4000 dans la doc),
+  comme `/metrics`. Rien de secret dans la configuration, donc pas de champ `secret`. Un 401/403
+  vient d'un proxy inverse placé devant (`ERROR_KINDS.AUTH`).
+- **Méthodes vérifiées** : `GET /api/blocking/status|enable|disable` (POST → 405) ;
+  `POST /api/lists/refresh` et `POST /api/cache/flush` (GET → 405). Réponses 200 **sans corps**
+  sauf le statut. Chemin inconnu : 404 `text/plain` (aussi `/metrics` quand Prometheus est éteint).
+- **Pause** : `disable?duration=5m&groups=a,b`. Statut en pause : `{"autoEnableInSec":299,
+"disabledGroups":["ads"],"enabled":false}`. Une nouvelle pause **remplace** la précédente
+  (groupes et durée) ; sans durée (ou `0`) = jusqu'à `enable`. Pas de piège de minuteur comme
+  Technitium. Sans `groups`, `disabledGroups` liste tous les groupes **plus `default`**. Une pause
+  partielle donne aussi `enabled: false` : l'interrupteur passe à 0, le widget montre les groupes
+  (`partialGroups`, comparés aux groupes des métriques). Groupe inconnu : 400
+  `group 'x' is unknown` ; une espace après la virgule suffit (`ads, kids` → `' kids'`) :
+  `parseGroups` nettoie.
+- **Métriques** (`prometheus.enable: true`) : compteurs **depuis le démarrage de Blocky**
+  (`blocky_query_total`, `blocky_response_total{response_type="BLOCKED"}`,
+  `blocky_cache_hits_total`/`misses_total`), jauges `blocky_denylist_cache_entries{group}`,
+  `blocky_build_info{version}`. Anciens noms lus en repli (`blocky_cache_hit_count`,
+  `blocky_blacklist_cache`…, non vérifiés sur une vieille version). La « dernière heure » vient
+  d'une fenêtre d'échantillons (`HourWindow`) : base = la plus récente lecture vieille d'une heure,
+  `null` tant qu'il n'y a pas deux lectures espacées de 10 s ; un compteur qui baisse (Blocky
+  redémarré) vide la fenêtre. Fenêtre en mémoire seulement : rien sous `/data`.
+- **Taux de cache** : seules les requêtes envoyées en amont passent par le cache (ni bloquées, ni
+  `customDNS`) ; sans recherche dans l'heure, pas de valeur (rien publié).
+- Sans Prometheus, l'appareil n'a que l'interrupteur ; l'activer republie l'appareil
+  (`structure_changed`). Une erreur passagère de `/metrics` garde les dernières valeurs.
+- Identité d'un appareil = **numéro d'emplacement** (1 à 3) : Blocky n'expose pas d'identifiant
+  d'instance. Une adresse sans schéma ni port reçoit `:4000`.
+- Course lecture/commande : `record.generation`, comme Technitium. Après une pause, le statut est
+  relu pour connaître les groupes réellement en pause.
 
 ## Store
 

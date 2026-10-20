@@ -1,177 +1,1120 @@
 {
   "manifest_version": 1,
   "type": "device",
-  "name": "Demo Devices Template",
+  "name": "Blocky",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "Blocky DNS ad blocker: blocking pause by group, query statistics, list refresh.",
+    "fr": "Bloqueur de pubs DNS Blocky : pause du blocage par groupe, statistiques, rafraîchir les listes.",
+    "de": "DNS-Werbeblocker Blocky: Blockierpause nach Gruppe, Statistiken, Listen aktualisieren.",
+    "es": "Bloqueador DNS Blocky: pausa del bloqueo por grupo, estadísticas, actualizar las listas."
   },
   "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
+  "docker_image": "ghcr.io/guim31/gladys-blocky:1.0.0",
   "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
-  "transports": ["local", "cloud"],
+  "cover_image": "https://raw.githubusercontent.com/guim31/gladys-blocky/main/cover.png",
+  "categories": ["network"],
+  "transports": ["local"],
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
+      "label": {
+        "en": "Your Blocky server",
+        "fr": "Votre serveur Blocky",
+        "de": "Dein Blocky-Server",
+        "es": "Su servidor Blocky"
+      },
       "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+        "en": "Blocky's REST API, on its HTTP port (ports: http: 4000 in config.yml). For the statistics, also turn on prometheus (enable: true). Up to three servers.",
+        "fr": "L'API REST de Blocky, sur son port HTTP (ports: http: 4000 dans config.yml). Pour les statistiques, activez aussi prometheus (enable: true). Jusqu'à trois serveurs.",
+        "de": "Die REST-API von Blocky auf seinem HTTP-Port (ports: http: 4000 in config.yml). Für die Statistiken aktiviere auch prometheus (enable: true). Bis zu drei Server.",
+        "es": "La API REST de Blocky, en su puerto HTTP (ports: http: 4000 en config.yml). Para las estadísticas, active también prometheus (enable: true). Hasta tres servidores."
       },
       "links": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "url": "https://0xerr0r.github.io/blocky/latest/configuration/",
+          "label": {
+            "en": "Blocky configuration",
+            "fr": "Configuration de Blocky",
+            "de": "Blocky-Konfiguration",
+            "es": "Configuración de Blocky"
+          }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
+      "key": "server_1_url",
+      "type": "string",
+      "label": {
+        "en": "Address",
+        "fr": "Adresse",
+        "de": "Adresse",
+        "es": "Dirección"
       },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
+      "description": {
+        "en": "IP address or name of the server (HTTP port 4000 by default), or a full URL such as http://192.168.1.2:4000.",
+        "fr": "Adresse IP ou nom du serveur (port HTTP 4000 par défaut), ou une URL complète comme http://192.168.1.2:4000.",
+        "de": "IP-Adresse oder Name des Servers (standardmäßig HTTP-Port 4000) oder eine vollständige URL wie http://192.168.1.2:4000.",
+        "es": "Dirección IP o nombre del servidor (puerto HTTP 4000 por defecto), o una URL completa como http://192.168.1.2:4000."
+      },
+      "placeholder": {
+        "en": "e.g. 192.168.1.2",
+        "fr": "ex. 192.168.1.2",
+        "de": "z. B. 192.168.1.2",
+        "es": "p. ej. 192.168.1.2"
+      },
       "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
+      "default": ""
     },
     {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
-      "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
+      "key": "server_1_name",
+      "type": "string",
+      "label": {
+        "en": "Name",
+        "fr": "Nom",
+        "de": "Name",
+        "es": "Nombre"
       },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
-    },
-    {
-      "key": "unit",
-      "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
+      "description": {
+        "en": "Name of the device in Gladys. Empty: \"Blocky\" followed by the address.",
+        "fr": "Nom de l'appareil dans Gladys. Vide : « Blocky » suivi de l'adresse.",
+        "de": "Name des Geräts in Gladys. Leer: „Blocky“ gefolgt von der Adresse.",
+        "es": "Nombre del dispositivo en Gladys. Vacío: «Blocky» seguido de la dirección."
+      },
+      "placeholder": {
+        "en": "e.g. Main DNS",
+        "fr": "ex. DNS principal",
+        "de": "z. B. Haupt-DNS",
+        "es": "p. ej. DNS principal"
+      },
       "required": false,
-      "default": "celsius",
+      "default": ""
+    },
+    {
+      "key": "server_2",
+      "type": "section",
+      "label": {
+        "en": "Second server (optional)",
+        "fr": "Deuxième serveur (facultatif)",
+        "de": "Zweiter Server (optional)",
+        "es": "Segundo servidor (opcional)"
+      },
+      "description": {
+        "en": "Same fields, for another Blocky server of your network.",
+        "fr": "Les mêmes champs, pour un autre serveur Blocky de votre réseau.",
+        "de": "Dieselben Felder, für einen weiteren Blocky-Server in deinem Netzwerk.",
+        "es": "Los mismos campos, para otro servidor Blocky de su red."
+      }
+    },
+    {
+      "key": "server_2_url",
+      "type": "string",
+      "label": {
+        "en": "Address",
+        "fr": "Adresse",
+        "de": "Adresse",
+        "es": "Dirección"
+      },
+      "description": {
+        "en": "IP address or name of the server (HTTP port 4000 by default), or a full URL such as http://192.168.1.2:4000.",
+        "fr": "Adresse IP ou nom du serveur (port HTTP 4000 par défaut), ou une URL complète comme http://192.168.1.2:4000.",
+        "de": "IP-Adresse oder Name des Servers (standardmäßig HTTP-Port 4000) oder eine vollständige URL wie http://192.168.1.2:4000.",
+        "es": "Dirección IP o nombre del servidor (puerto HTTP 4000 por defecto), o una URL completa como http://192.168.1.2:4000."
+      },
+      "placeholder": {
+        "en": "e.g. 192.168.1.2",
+        "fr": "ex. 192.168.1.2",
+        "de": "z. B. 192.168.1.2",
+        "es": "p. ej. 192.168.1.2"
+      },
+      "required": false,
+      "default": ""
+    },
+    {
+      "key": "server_2_name",
+      "type": "string",
+      "label": {
+        "en": "Name",
+        "fr": "Nom",
+        "de": "Name",
+        "es": "Nombre"
+      },
+      "description": {
+        "en": "Name of the device in Gladys. Empty: \"Blocky\" followed by the address.",
+        "fr": "Nom de l'appareil dans Gladys. Vide : « Blocky » suivi de l'adresse.",
+        "de": "Name des Geräts in Gladys. Leer: „Blocky“ gefolgt von der Adresse.",
+        "es": "Nombre del dispositivo en Gladys. Vacío: «Blocky» seguido de la dirección."
+      },
+      "placeholder": {
+        "en": "e.g. Main DNS",
+        "fr": "ex. DNS principal",
+        "de": "z. B. Haupt-DNS",
+        "es": "p. ej. DNS principal"
+      },
+      "required": false,
+      "default": ""
+    },
+    {
+      "key": "server_3",
+      "type": "section",
+      "label": {
+        "en": "Third server (optional)",
+        "fr": "Troisième serveur (facultatif)",
+        "de": "Dritter Server (optional)",
+        "es": "Tercer servidor (opcional)"
+      },
+      "description": {
+        "en": "Same fields, for another Blocky server of your network.",
+        "fr": "Les mêmes champs, pour un autre serveur Blocky de votre réseau.",
+        "de": "Dieselben Felder, für einen weiteren Blocky-Server in deinem Netzwerk.",
+        "es": "Los mismos campos, para otro servidor Blocky de su red."
+      }
+    },
+    {
+      "key": "server_3_url",
+      "type": "string",
+      "label": {
+        "en": "Address",
+        "fr": "Adresse",
+        "de": "Adresse",
+        "es": "Dirección"
+      },
+      "description": {
+        "en": "IP address or name of the server (HTTP port 4000 by default), or a full URL such as http://192.168.1.2:4000.",
+        "fr": "Adresse IP ou nom du serveur (port HTTP 4000 par défaut), ou une URL complète comme http://192.168.1.2:4000.",
+        "de": "IP-Adresse oder Name des Servers (standardmäßig HTTP-Port 4000) oder eine vollständige URL wie http://192.168.1.2:4000.",
+        "es": "Dirección IP o nombre del servidor (puerto HTTP 4000 por defecto), o una URL completa como http://192.168.1.2:4000."
+      },
+      "placeholder": {
+        "en": "e.g. 192.168.1.2",
+        "fr": "ex. 192.168.1.2",
+        "de": "z. B. 192.168.1.2",
+        "es": "p. ej. 192.168.1.2"
+      },
+      "required": false,
+      "default": ""
+    },
+    {
+      "key": "server_3_name",
+      "type": "string",
+      "label": {
+        "en": "Name",
+        "fr": "Nom",
+        "de": "Name",
+        "es": "Nombre"
+      },
+      "description": {
+        "en": "Name of the device in Gladys. Empty: \"Blocky\" followed by the address.",
+        "fr": "Nom de l'appareil dans Gladys. Vide : « Blocky » suivi de l'adresse.",
+        "de": "Name des Geräts in Gladys. Leer: „Blocky“ gefolgt von der Adresse.",
+        "es": "Nombre del dispositivo en Gladys. Vacío: «Blocky» seguido de la dirección."
+      },
+      "placeholder": {
+        "en": "e.g. Main DNS",
+        "fr": "ex. DNS principal",
+        "de": "z. B. Haupt-DNS",
+        "es": "p. ej. DNS principal"
+      },
+      "required": false,
+      "default": ""
+    },
+    {
+      "key": "options",
+      "type": "section",
+      "label": {
+        "en": "Options",
+        "fr": "Options",
+        "de": "Optionen",
+        "es": "Opciones"
+      }
+    },
+    {
+      "key": "allow_self_signed",
+      "type": "boolean",
+      "label": {
+        "en": "Accept self-signed certificates",
+        "fr": "Accepter les certificats auto-signés",
+        "de": "Selbstsignierte Zertifikate akzeptieren",
+        "es": "Aceptar certificados autofirmados"
+      },
+      "description": {
+        "en": "For https:// addresses (Blocky's HTTPS port) with a self-signed certificate. Tick only for your own servers.",
+        "fr": "Pour les adresses en https:// (port HTTPS de Blocky) avec un certificat auto-signé. À cocher pour vos propres serveurs seulement.",
+        "de": "Für https://-Adressen (HTTPS-Port von Blocky) mit selbstsigniertem Zertifikat. Nur für deine eigenen Server aktivieren.",
+        "es": "Para direcciones https:// (puerto HTTPS de Blocky) con un certificado autofirmado. Márquelo solo para sus propios servidores."
+      },
+      "required": false,
+      "default": false
+    },
+    {
+      "key": "poll_interval",
+      "type": "select",
+      "label": {
+        "en": "Refresh interval",
+        "fr": "Intervalle de rafraîchissement",
+        "de": "Aktualisierungsintervall",
+        "es": "Intervalo de actualización"
+      },
+      "description": {
+        "en": "How often the Blocky servers are read.",
+        "fr": "Fréquence de lecture des serveurs Blocky.",
+        "de": "Wie oft die Blocky-Server gelesen werden.",
+        "es": "Con qué frecuencia se leen los servidores Blocky."
+      },
+      "required": false,
+      "default": "30",
       "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
+        {
+          "value": "30",
+          "label": {
+            "en": "30 seconds",
+            "fr": "30 secondes",
+            "de": "30 Sekunden",
+            "es": "30 segundos"
+          }
+        },
+        {
+          "value": "60",
+          "label": {
+            "en": "1 minute",
+            "fr": "1 minute",
+            "de": "1 Minute",
+            "es": "1 minuto"
+          }
+        },
+        {
+          "value": "120",
+          "label": {
+            "en": "2 minutes",
+            "fr": "2 minutes",
+            "de": "2 Minuten",
+            "es": "2 minutos"
+          }
+        },
+        {
+          "value": "300",
+          "label": {
+            "en": "5 minutes",
+            "fr": "5 minutes",
+            "de": "5 Minuten",
+            "es": "5 minutos"
+          }
+        }
       ]
     },
     {
-      "key": "poll_frequency",
-      "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
+      "key": "switch_off_minutes",
+      "type": "select",
+      "label": {
+        "en": "Turning the blocking switch off",
+        "fr": "Éteindre l'interrupteur de blocage",
+        "de": "Blockierschalter ausschalten",
+        "es": "Apagar el interruptor de bloqueo"
+      },
       "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+        "en": "Pauses the blocking for this long, or until the switch is turned back on.",
+        "fr": "Met le blocage en pause pour cette durée, ou jusqu'à ce que l'interrupteur soit rallumé.",
+        "de": "Pausiert die Blockierung so lange oder bis der Schalter wieder eingeschaltet wird.",
+        "es": "Pausa el bloqueo durante este tiempo, o hasta que se vuelva a encender el interruptor."
       },
       "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
+      "default": "5",
+      "options": [
+        {
+          "value": "0",
+          "label": {
+            "en": "Until turned back on",
+            "fr": "Jusqu'à réactivation",
+            "de": "Bis zum Wiedereinschalten",
+            "es": "Hasta volver a encenderlo"
+          }
+        },
+        {
+          "value": "5",
+          "label": {
+            "en": "Pause 5 minutes",
+            "fr": "Pause de 5 minutes",
+            "de": "5 Minuten Pause",
+            "es": "Pausa de 5 minutos"
+          }
+        },
+        {
+          "value": "15",
+          "label": {
+            "en": "Pause 15 minutes",
+            "fr": "Pause de 15 minutes",
+            "de": "15 Minuten Pause",
+            "es": "Pausa de 15 minutos"
+          }
+        },
+        {
+          "value": "30",
+          "label": {
+            "en": "Pause 30 minutes",
+            "fr": "Pause de 30 minutes",
+            "de": "30 Minuten Pause",
+            "es": "Pausa de 30 minutos"
+          }
+        },
+        {
+          "value": "60",
+          "label": {
+            "en": "Pause 1 hour",
+            "fr": "Pause d'une heure",
+            "de": "1 Stunde Pause",
+            "es": "Pausa de 1 hora"
+          }
+        }
+      ]
+    },
+    {
+      "key": "language",
+      "type": "select",
+      "label": {
+        "en": "Language of the feature names",
+        "fr": "Langue des noms de fonctionnalités",
+        "de": "Sprache der Funktionsnamen",
+        "es": "Idioma de los nombres de funciones"
+      },
+      "description": {
+        "en": "Names given to the features when a device is added, and texts of the scene events.",
+        "fr": "Noms donnés aux fonctionnalités à l'ajout d'un appareil, et textes des événements de scène.",
+        "de": "Namen der Funktionen beim Hinzufügen eines Geräts und Texte der Szenen-Ereignisse.",
+        "es": "Nombres de las funciones al añadir un dispositivo y textos de los eventos de escena."
+      },
+      "required": false,
+      "default": "fr",
+      "options": [
+        {
+          "value": "en",
+          "label": {
+            "en": "English",
+            "fr": "Anglais",
+            "de": "Englisch",
+            "es": "Inglés"
+          }
+        },
+        {
+          "value": "fr",
+          "label": {
+            "en": "French",
+            "fr": "Français",
+            "de": "Französisch",
+            "es": "Francés"
+          }
+        },
+        {
+          "value": "de",
+          "label": {
+            "en": "German",
+            "fr": "Allemand",
+            "de": "Deutsch",
+            "es": "Alemán"
+          }
+        },
+        {
+          "value": "es",
+          "label": {
+            "en": "Spanish",
+            "fr": "Espagnol",
+            "de": "Spanisch",
+            "es": "Español"
+          }
+        }
+      ]
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
+      "key": "test_connection",
+      "label": {
+        "en": "Test the connection",
+        "fr": "Tester la connexion",
+        "de": "Verbindung testen",
+        "es": "Probar la conexión"
+      },
+      "description": {
+        "en": "Reads every Blocky server now and reports what it finds.",
+        "fr": "Lit chaque serveur Blocky maintenant et indique ce qu'il trouve.",
+        "de": "Liest jeden Blocky-Server sofort und meldet, was er findet.",
+        "es": "Lee cada servidor Blocky ahora e indica lo que encuentra."
+      },
       "timeout_seconds": 30
-    },
-    {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ]
     }
   ],
   "scene_triggers": [
     {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
+      "key": "blocking_paused",
+      "label": {
+        "en": "Blocky blocking paused",
+        "fr": "Blocage Blocky mis en pause",
+        "de": "Blocky-Blockierung pausiert",
+        "es": "Bloqueo de Blocky en pausa"
+      },
       "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
+        "en": "The blocking was turned off, from Gladys or elsewhere, with the length of the pause and its groups.",
+        "fr": "Le blocage a été désactivé, depuis Gladys ou ailleurs, avec la durée de la pause et ses groupes.",
+        "de": "Die Blockierung wurde ausgeschaltet, über Gladys oder anderswo, mit der Dauer der Pause und ihren Gruppen.",
+        "es": "El bloqueo se ha desactivado, desde Gladys o desde otro lugar, con la duración de la pausa y sus grupos."
       },
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
+          "label": {
+            "en": "Server (empty: any)",
+            "fr": "Serveur (vide : n'importe lequel)",
+            "de": "Server (leer: beliebig)",
+            "es": "Servidor (vacío: cualquiera)"
+          }
         },
         {
-          "key": "target",
-          "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
+          "key": "origin",
+          "type": "select",
+          "label": {
+            "en": "Origin (empty: any)",
+            "fr": "Origine (vide : toutes)",
+            "de": "Ursprung (leer: beliebig)",
+            "es": "Origen (vacío: cualquiera)"
+          },
           "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
+            {
+              "value": "gladys",
+              "label": {
+                "en": "From Gladys",
+                "fr": "Depuis Gladys",
+                "de": "Von Gladys",
+                "es": "Desde Gladys"
+              }
+            },
+            {
+              "value": "blocky",
+              "label": {
+                "en": "Outside Gladys (blocky CLI, API…)",
+                "fr": "Hors de Gladys (commande blocky, API…)",
+                "de": "Außerhalb von Gladys (blocky-Befehl, API…)",
+                "es": "Fuera de Gladys (comando blocky, API…)"
+              }
+            }
           ]
         }
       ],
       "variables": [
         {
-          "key": "target",
+          "key": "server",
           "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
+          "label": {
+            "en": "Server name",
+            "fr": "Nom du serveur",
+            "de": "Name des Servers",
+            "es": "Nombre del servidor"
+          }
+        },
+        {
+          "key": "device",
+          "type": "string",
+          "label": {
+            "en": "Blocky device",
+            "fr": "Appareil Blocky",
+            "de": "Blocky-Gerät",
+            "es": "Dispositivo Blocky"
+          }
+        },
+        {
+          "key": "origin",
+          "type": "string",
+          "label": {
+            "en": "Origin (gladys, blocky, timer)",
+            "fr": "Origine (gladys, blocky, timer)",
+            "de": "Ursprung (gladys, blocky, timer)",
+            "es": "Origen (gladys, blocky, timer)"
+          }
+        },
+        {
+          "key": "duration_minutes",
+          "type": "number",
+          "label": {
+            "en": "Pause length in minutes (0: no end)",
+            "fr": "Durée de la pause en minutes (0 : sans fin)",
+            "de": "Dauer der Pause in Minuten (0: ohne Ende)",
+            "es": "Duración de la pausa en minutos (0: sin fin)"
+          }
+        },
+        {
+          "key": "groups",
+          "type": "string",
+          "label": {
+            "en": "Groups paused (comma-separated)",
+            "fr": "Groupes en pause (séparés par des virgules)",
+            "de": "Pausierte Gruppen (durch Kommas getrennt)",
+            "es": "Grupos en pausa (separados por comas)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "blocking_resumed",
+      "label": {
+        "en": "Blocky blocking resumed",
+        "fr": "Blocage Blocky réactivé",
+        "de": "Blocky-Blockierung fortgesetzt",
+        "es": "Bloqueo de Blocky reactivado"
+      },
+      "description": {
+        "en": "The blocking is on again: at the end of the pause, from Gladys or elsewhere.",
+        "fr": "Le blocage est de nouveau actif : à la fin de la pause, depuis Gladys ou ailleurs.",
+        "de": "Die Blockierung ist wieder aktiv: am Ende der Pause, über Gladys oder anderswo.",
+        "es": "El bloqueo vuelve a estar activo: al final de la pausa, desde Gladys o desde otro lugar."
+      },
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Server (empty: any)",
+            "fr": "Serveur (vide : n'importe lequel)",
+            "de": "Server (leer: beliebig)",
+            "es": "Servidor (vacío: cualquiera)"
+          }
+        },
+        {
+          "key": "origin",
+          "type": "select",
+          "label": {
+            "en": "Origin (empty: any)",
+            "fr": "Origine (vide : toutes)",
+            "de": "Ursprung (leer: beliebig)",
+            "es": "Origen (vacío: cualquiera)"
+          },
+          "options": [
+            {
+              "value": "timer",
+              "label": {
+                "en": "End of the pause",
+                "fr": "Fin de la pause",
+                "de": "Ende der Pause",
+                "es": "Fin de la pausa"
+              }
+            },
+            {
+              "value": "gladys",
+              "label": {
+                "en": "From Gladys",
+                "fr": "Depuis Gladys",
+                "de": "Von Gladys",
+                "es": "Desde Gladys"
+              }
+            },
+            {
+              "value": "blocky",
+              "label": {
+                "en": "Outside Gladys (blocky CLI, API…)",
+                "fr": "Hors de Gladys (commande blocky, API…)",
+                "de": "Außerhalb von Gladys (blocky-Befehl, API…)",
+                "es": "Fuera de Gladys (comando blocky, API…)"
+              }
+            }
+          ]
+        }
+      ],
+      "variables": [
+        {
+          "key": "server",
+          "type": "string",
+          "label": {
+            "en": "Server name",
+            "fr": "Nom du serveur",
+            "de": "Name des Servers",
+            "es": "Nombre del servidor"
+          }
+        },
+        {
+          "key": "device",
+          "type": "string",
+          "label": {
+            "en": "Blocky device",
+            "fr": "Appareil Blocky",
+            "de": "Blocky-Gerät",
+            "es": "Dispositivo Blocky"
+          }
+        },
+        {
+          "key": "origin",
+          "type": "string",
+          "label": {
+            "en": "Origin (gladys, blocky, timer)",
+            "fr": "Origine (gladys, blocky, timer)",
+            "de": "Ursprung (gladys, blocky, timer)",
+            "es": "Origen (gladys, blocky, timer)"
+          }
+        },
+        {
+          "key": "paused_minutes",
+          "type": "number",
+          "label": {
+            "en": "Minutes without blocking",
+            "fr": "Minutes sans blocage",
+            "de": "Minuten ohne Blockierung",
+            "es": "Minutos sin bloqueo"
+          }
+        }
+      ]
+    },
+    {
+      "key": "server_unreachable",
+      "label": {
+        "en": "Blocky no longer answers",
+        "fr": "Blocky ne répond plus",
+        "de": "Blocky antwortet nicht mehr",
+        "es": "Blocky ya no responde"
+      },
+      "description": {
+        "en": "A Blocky server stopped answering (two reads in a row): the DNS of the home may be down.",
+        "fr": "Un serveur Blocky ne répond plus (deux lectures de suite) : le DNS de la maison est peut-être en panne.",
+        "de": "Ein Blocky-Server antwortet nicht mehr (zwei Abfragen in Folge): Das DNS des Hauses ist vielleicht ausgefallen.",
+        "es": "Un servidor Blocky ha dejado de responder (dos lecturas seguidas): el DNS de la casa puede estar caído."
+      },
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Server (empty: any)",
+            "fr": "Serveur (vide : n'importe lequel)",
+            "de": "Server (leer: beliebig)",
+            "es": "Servidor (vacío: cualquiera)"
+          }
+        }
+      ],
+      "variables": [
+        {
+          "key": "server",
+          "type": "string",
+          "label": {
+            "en": "Server name",
+            "fr": "Nom du serveur",
+            "de": "Name des Servers",
+            "es": "Nombre del servidor"
+          }
+        },
+        {
+          "key": "device",
+          "type": "string",
+          "label": {
+            "en": "Blocky device",
+            "fr": "Appareil Blocky",
+            "de": "Blocky-Gerät",
+            "es": "Dispositivo Blocky"
+          }
+        },
+        {
+          "key": "error",
+          "type": "string",
+          "label": {
+            "en": "Error",
+            "fr": "Erreur",
+            "de": "Fehler",
+            "es": "Error"
+          }
+        }
+      ]
+    },
+    {
+      "key": "server_recovered",
+      "label": {
+        "en": "Blocky answers again",
+        "fr": "Blocky répond de nouveau",
+        "de": "Blocky antwortet wieder",
+        "es": "Blocky vuelve a responder"
+      },
+      "description": {
+        "en": "A Blocky server that no longer answered is back.",
+        "fr": "Un serveur Blocky qui ne répondait plus est de retour.",
+        "de": "Ein Blocky-Server, der nicht mehr antwortete, ist wieder da.",
+        "es": "Un servidor Blocky que no respondía ha vuelto."
+      },
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Server (empty: any)",
+            "fr": "Serveur (vide : n'importe lequel)",
+            "de": "Server (leer: beliebig)",
+            "es": "Servidor (vacío: cualquiera)"
+          }
+        }
+      ],
+      "variables": [
+        {
+          "key": "server",
+          "type": "string",
+          "label": {
+            "en": "Server name",
+            "fr": "Nom du serveur",
+            "de": "Name des Servers",
+            "es": "Nombre del servidor"
+          }
+        },
+        {
+          "key": "device",
+          "type": "string",
+          "label": {
+            "en": "Blocky device",
+            "fr": "Appareil Blocky",
+            "de": "Blocky-Gerät",
+            "es": "Dispositivo Blocky"
+          }
+        },
+        {
+          "key": "down_minutes",
+          "type": "number",
+          "label": {
+            "en": "Minutes without answer",
+            "fr": "Minutes sans réponse",
+            "de": "Minuten ohne Antwort",
+            "es": "Minutos sin respuesta"
+          }
         }
       ]
     }
   ],
   "scene_actions": [
     {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
+      "key": "pause_blocking",
+      "label": {
+        "en": "Pause Blocky blocking",
+        "fr": "Mettre le blocage Blocky en pause",
+        "de": "Blocky-Blockierung pausieren",
+        "es": "Pausar el bloqueo de Blocky"
       },
-      "timeout_seconds": 15,
+      "description": {
+        "en": "Turn the blocking off for a number of minutes, for some Blocky groups or all, on one server or all of them.",
+        "fr": "Désactive le blocage pour un nombre de minutes, pour certains groupes Blocky ou tous, sur un serveur ou sur tous.",
+        "de": "Schaltet die Blockierung für einige Minuten aus, für bestimmte Blocky-Gruppen oder alle, auf einem oder allen Servern.",
+        "es": "Desactiva el bloqueo durante unos minutos, para algunos grupos de Blocky o todos, en un servidor o en todos."
+      },
+      "timeout_seconds": 20,
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
+          "label": {
+            "en": "Server (empty: all)",
+            "fr": "Serveur (vide : tous)",
+            "de": "Server (leer: alle)",
+            "es": "Servidor (vacío: todos)"
+          }
+        },
+        {
+          "key": "minutes",
+          "type": "number",
+          "label": {
+            "en": "Duration in minutes (0: until resumed)",
+            "fr": "Durée en minutes (0 : jusqu'à réactivation)",
+            "de": "Dauer in Minuten (0: bis zum Fortsetzen)",
+            "es": "Duración en minutos (0: hasta reactivar)"
+          },
+          "required": false,
+          "default": 5,
+          "min": 0,
+          "max": 1440
+        },
+        {
+          "key": "groups",
+          "type": "string",
+          "label": {
+            "en": "Groups (empty: all)",
+            "fr": "Groupes (vide : tous)",
+            "de": "Gruppen (leer: alle)",
+            "es": "Grupos (vacío: todos)"
+          },
+          "description": {
+            "en": "Names of denylist groups of config.yml, separated by commas, e.g. ads, kids.",
+            "fr": "Noms de groupes de denylists de config.yml, séparés par des virgules, ex. ads, kids.",
+            "de": "Namen von Denylist-Gruppen aus config.yml, durch Kommas getrennt, z. B. ads, kids.",
+            "es": "Nombres de grupos de denylists de config.yml, separados por comas, p. ej. ads, kids."
+          },
+          "placeholder": {
+            "en": "e.g. ads",
+            "fr": "ex. ads",
+            "de": "z. B. ads",
+            "es": "p. ej. ads"
+          },
+          "required": false,
+          "default": ""
         }
       ],
       "outputs": [
         {
-          "key": "signalled",
+          "key": "servers",
+          "type": "number",
+          "label": {
+            "en": "Servers paused",
+            "fr": "Serveurs mis en pause",
+            "de": "Pausierte Server",
+            "es": "Servidores en pausa"
+          }
+        },
+        {
+          "key": "minutes",
+          "type": "number",
+          "label": {
+            "en": "Duration in minutes",
+            "fr": "Durée en minutes",
+            "de": "Dauer in Minuten",
+            "es": "Duración en minutos"
+          }
+        }
+      ]
+    },
+    {
+      "key": "resume_blocking",
+      "label": {
+        "en": "Resume Blocky blocking",
+        "fr": "Réactiver le blocage Blocky",
+        "de": "Blocky-Blockierung fortsetzen",
+        "es": "Reactivar el bloqueo de Blocky"
+      },
+      "description": {
+        "en": "Turn the blocking back on, on one server or all of them.",
+        "fr": "Réactive le blocage, sur un serveur ou sur tous.",
+        "de": "Schaltet die Blockierung wieder ein, auf einem oder allen Servern.",
+        "es": "Vuelve a activar el bloqueo, en un servidor o en todos."
+      },
+      "timeout_seconds": 20,
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Server (empty: all)",
+            "fr": "Serveur (vide : tous)",
+            "de": "Server (leer: alle)",
+            "es": "Servidor (vacío: todos)"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "key": "servers",
+          "type": "number",
+          "label": {
+            "en": "Servers resumed",
+            "fr": "Serveurs réactivés",
+            "de": "Fortgesetzte Server",
+            "es": "Servidores reactivados"
+          }
+        }
+      ]
+    },
+    {
+      "key": "refresh_lists",
+      "label": {
+        "en": "Refresh the Blocky lists",
+        "fr": "Rafraîchir les listes Blocky",
+        "de": "Blocky-Listen aktualisieren",
+        "es": "Actualizar las listas de Blocky"
+      },
+      "description": {
+        "en": "Downloads the deny and allow lists again now (after editing a list, or before the scheduled refresh).",
+        "fr": "Télécharge de nouveau les listes de blocage et d'autorisation (après la modification d'une liste, ou avant le rafraîchissement prévu).",
+        "de": "Lädt die Block- und Erlaubnislisten sofort neu herunter (nach dem Bearbeiten einer Liste oder vor der geplanten Aktualisierung).",
+        "es": "Vuelve a descargar ahora las listas de bloqueo y de permitidos (tras editar una lista, o antes de la actualización programada)."
+      },
+      "timeout_seconds": 120,
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Server (empty: all)",
+            "fr": "Serveur (vide : tous)",
+            "de": "Server (leer: alle)",
+            "es": "Servidor (vacío: todos)"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "key": "servers",
+          "type": "number",
+          "label": {
+            "en": "Servers refreshed",
+            "fr": "Serveurs rafraîchis",
+            "de": "Aktualisierte Server",
+            "es": "Servidores actualizados"
+          }
+        }
+      ]
+    },
+    {
+      "key": "flush_cache",
+      "label": {
+        "en": "Flush the Blocky DNS cache",
+        "fr": "Vider le cache DNS de Blocky",
+        "de": "DNS-Cache von Blocky leeren",
+        "es": "Vaciar la caché DNS de Blocky"
+      },
+      "description": {
+        "en": "Empties the DNS cache, so the next queries ask the internet again (after a DNS change).",
+        "fr": "Vide le cache DNS : les requêtes suivantes interrogent de nouveau Internet (après un changement DNS).",
+        "de": "Leert den DNS-Cache: Die nächsten Anfragen gehen wieder ins Internet (nach einer DNS-Änderung).",
+        "es": "Vacía la caché DNS: las siguientes consultas vuelven a preguntar a Internet (tras un cambio de DNS)."
+      },
+      "timeout_seconds": 20,
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Server (empty: all)",
+            "fr": "Serveur (vide : tous)",
+            "de": "Server (leer: alle)",
+            "es": "Servidor (vacío: todos)"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "key": "servers",
+          "type": "number",
+          "label": {
+            "en": "Servers flushed",
+            "fr": "Serveurs vidés",
+            "de": "Geleerte Server",
+            "es": "Servidores vaciados"
+          }
+        }
+      ]
+    },
+    {
+      "key": "read_statistics",
+      "label": {
+        "en": "Read the Blocky statistics",
+        "fr": "Lire les statistiques Blocky",
+        "de": "Blocky-Statistiken lesen",
+        "es": "Leer las estadísticas de Blocky"
+      },
+      "description": {
+        "en": "Reads the queries of the last hour into a sentence, to send or speak in the next actions (needs prometheus).",
+        "fr": "Lit les requêtes de la dernière heure en une phrase, à envoyer ou à dire dans les actions suivantes (prometheus requis).",
+        "de": "Liest die Anfragen der letzten Stunde in einen Satz, zum Senden oder Vorlesen in den nächsten Aktionen (prometheus nötig).",
+        "es": "Lee las consultas de la última hora en una frase, para enviar o decir en las acciones siguientes (requiere prometheus)."
+      },
+      "timeout_seconds": 30,
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Server (empty: all)",
+            "fr": "Serveur (vide : tous)",
+            "de": "Server (leer: alle)",
+            "es": "Servidor (vacío: todos)"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "key": "sentence",
+          "type": "string",
+          "label": {
+            "en": "Sentence",
+            "fr": "Phrase",
+            "de": "Satz",
+            "es": "Frase"
+          }
+        },
+        {
+          "key": "queries_last_hour",
+          "type": "number",
+          "label": {
+            "en": "Queries (last hour)",
+            "fr": "Requêtes (dernière heure)",
+            "de": "Anfragen (letzte Stunde)",
+            "es": "Consultas (última hora)"
+          }
+        },
+        {
+          "key": "blocked_last_hour",
+          "type": "number",
+          "label": {
+            "en": "Blocked queries (last hour)",
+            "fr": "Requêtes bloquées (dernière heure)",
+            "de": "Blockierte Anfragen (letzte Stunde)",
+            "es": "Consultas bloqueadas (última hora)"
+          }
+        },
+        {
+          "key": "blocked_percent",
+          "type": "number",
+          "label": {
+            "en": "Share blocked (%)",
+            "fr": "Part bloquée (%)",
+            "de": "Anteil blockiert (%)",
+            "es": "Proporción bloqueada (%)"
+          }
+        },
+        {
+          "key": "blocking_enabled",
           "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
+          "label": {
+            "en": "Blocking on",
+            "fr": "Blocage actif",
+            "de": "Blockierung aktiv",
+            "es": "Bloqueo activo"
+          }
         }
       ]
     }
   ],
   "widgets": [
     {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
-      "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
+      "key": "blocky",
+      "label": {
+        "en": "Blocky",
+        "fr": "Blocky",
+        "de": "Blocky",
+        "es": "Blocky"
       },
-      "icon": "activity",
-      "action_timeout_seconds": 15
+      "description": {
+        "en": "Blocking state, queries of the last hour, and pause or resume buttons.",
+        "fr": "État du blocage, requêtes de la dernière heure, boutons de pause et de réactivation.",
+        "de": "Status der Blockierung, Anfragen der letzten Stunde, Pause- und Fortsetzen-Tasten.",
+        "es": "Estado del bloqueo, consultas de la última hora, botones de pausa y reactivación."
+      },
+      "icon": "shield",
+      "action_timeout_seconds": 20,
+      "settings": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Server (empty: all)",
+            "fr": "Serveur (vide : tous)",
+            "de": "Server (leer: alle)",
+            "es": "Servidor (vacío: todos)"
+          },
+          "description": {
+            "en": "Pausing one server of two changes nothing: your devices then ask the other one.",
+            "fr": "Mettre en pause un seul serveur sur deux ne change rien : vos appareils interrogent alors l'autre.",
+            "de": "Einen Server von zweien zu pausieren ändert nichts: Deine Geräte fragen dann den anderen.",
+            "es": "Pausar un solo servidor de dos no cambia nada: sus dispositivos consultan entonces el otro."
+          },
+          "required": false
+        }
+      ]
     }
   ]
 }
