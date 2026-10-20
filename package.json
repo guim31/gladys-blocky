@@ -1,8 +1,8 @@
 {
-  "name": "gladys-integration-template-js",
+  "name": "gladys-blocky",
   "version": "1.0.0",
   "private": true,
-  "description": "Official starter template to build an external integration for Gladys Assistant with the JavaScript SDK.",
+  "description": "Blocky integration for Gladys Assistant: blocking pause by group, query statistics, list refresh.",
   "type": "module",
   "main": "index.js",
   "scripts": {
