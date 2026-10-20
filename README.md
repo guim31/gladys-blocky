@@ -142,9 +142,10 @@ answers of a real server (`test/fixtures/blocky/real/`). See
 
 ## Credits
 
-- [Blocky](https://github.com/0xERR0R/blocky) by Dimitri Herzog and
-  contributors (Apache-2.0): its documentation and API, and its logo, used on
-  the cover to say what the integration works with. No code was copied.
+- [Blocky](https://github.com/0xERR0R/blocky) by 0xERR0R and contributors
+  (Apache-2.0): its documentation and API, and its logo
+  ([`docs/blocky.svg`](https://github.com/0xERR0R/blocky/blob/main/docs/blocky.svg)),
+  used on the cover to say what the integration works with. No code was copied.
 - [Technitium DNS for Gladys](https://github.com/guim31/gladys-technitium) and
   [Pi-hole for Gladys](https://github.com/guim31/gladys-pihole): the
   architecture, the pause buttons, triggers and actions, adapted here.

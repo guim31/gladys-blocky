@@ -123,19 +123,19 @@ const number = (value, locale) => new Intl.NumberFormat(locale).format(value);
 export const STATS_TEXT = {
   en: {
     sentence: ({ queries, blocked, percent, minutes }) =>
-      `${minutes >= 60 ? 'In the last hour' : `In the last ${minutes} minutes`}, ${number(queries, 'en')} DNS queries, ${number(blocked, 'en')} blocked (${number(percent, 'en')} %).`,
+      `${minutes >= 60 ? 'In the last hour' : minutes === 1 ? 'In the last minute' : `In the last ${minutes} minutes`}, ${number(queries, 'en')} DNS queries, ${number(blocked, 'en')} blocked (${number(percent, 'en')} %).`,
   },
   fr: {
     sentence: ({ queries, blocked, percent, minutes }) =>
-      `${minutes >= 60 ? 'Sur la dernière heure' : `Sur les ${minutes} dernières minutes`}, ${number(queries, 'fr')} requêtes DNS, dont ${number(blocked, 'fr')} bloquées (${number(percent, 'fr')} %).`,
+      `${minutes >= 60 ? 'Sur la dernière heure' : minutes === 1 ? 'Sur la dernière minute' : `Sur les ${minutes} dernières minutes`}, ${number(queries, 'fr')} requêtes DNS, dont ${number(blocked, 'fr')} bloquées (${number(percent, 'fr')} %).`,
   },
   de: {
     sentence: ({ queries, blocked, percent, minutes }) =>
-      `${minutes >= 60 ? 'In der letzten Stunde' : `In den letzten ${minutes} Minuten`} ${number(queries, 'de')} DNS-Anfragen, davon ${number(blocked, 'de')} blockiert (${number(percent, 'de')} %).`,
+      `${minutes >= 60 ? 'In der letzten Stunde' : minutes === 1 ? 'In der letzten Minute' : `In den letzten ${minutes} Minuten`} ${number(queries, 'de')} DNS-Anfragen, davon ${number(blocked, 'de')} blockiert (${number(percent, 'de')} %).`,
   },
   es: {
     sentence: ({ queries, blocked, percent, minutes }) =>
-      `${minutes >= 60 ? 'En la última hora' : `En los últimos ${minutes} minutos`}, ${number(queries, 'es')} consultas DNS, de ellas ${number(blocked, 'es')} bloqueadas (${number(percent, 'es')} %).`,
+      `${minutes >= 60 ? 'En la última hora' : minutes === 1 ? 'En el último minuto' : `En los últimos ${minutes} minutos`}, ${number(queries, 'es')} consultas DNS, de ellas ${number(blocked, 'es')} bloqueadas (${number(percent, 'es')} %).`,
   },
 };
 

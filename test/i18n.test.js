@@ -180,8 +180,14 @@ test('the reports and toasts exist in every language', () => {
   const sentence = (value) =>
     value({ queries: 1234567, blocked: 123456, percent: 10.5, minutes: 60 });
   assert.deepEqual(tableProblems(STATS_TEXT, 'STATS_TEXT', MAX.message, sentence), []);
-  const short = (value) => value({ queries: 1, blocked: 0, percent: 0, minutes: 12 });
-  assert.deepEqual(tableProblems(STATS_TEXT, 'STATS_TEXT', MAX.message, short), []);
+  for (const minutes of [1, 12]) {
+    const short = (value) => value({ queries: 1, blocked: 0, percent: 0, minutes });
+    assert.deepEqual(tableProblems(STATS_TEXT, 'STATS_TEXT', MAX.message, short), []);
+  }
+  assert.match(
+    STATS_TEXT.fr.sentence({ queries: 1, blocked: 0, percent: 0, minutes: 1 }),
+    /^Sur la dernière minute,/,
+  );
 });
 
 test('the guard catches a missing language, an empty text and the polite German form', () => {
