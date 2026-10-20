@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-20
+
 ### Added
 
 - One device per Blocky server (up to three): a blocking switch (off pauses the
@@ -28,4 +30,5 @@ the notes of the version's GitHub Release.
 - A "Test the connection" button, and texts in English, French, German and
   Spanish.
 
-[Unreleased]: https://github.com/guim31/gladys-blocky/commits/main
+[Unreleased]: https://github.com/guim31/gladys-blocky/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/guim31/gladys-blocky/releases/tag/v1.0.0
