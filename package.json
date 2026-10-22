@@ -1,6 +1,6 @@
 {
   "name": "gladys-blocky",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Blocky integration for Gladys Assistant: blocking pause by group, query statistics, list refresh.",
   "type": "module",

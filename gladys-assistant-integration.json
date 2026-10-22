@@ -8,8 +8,8 @@
     "de": "DNS-Werbeblocker Blocky: Blockierpause nach Gruppe, Statistiken, Listen aktualisieren.",
     "es": "Bloqueador DNS Blocky: pausa del bloqueo por grupo, estadísticas, actualizar las listas."
   },
-  "version": "1.0.0",
-  "docker_image": "ghcr.io/guim31/gladys-blocky:1.0.0",
+  "version": "1.0.1",
+  "docker_image": "ghcr.io/guim31/gladys-blocky:1.0.1",
   "gladys_version": ">=5.1.0",
   "cover_image": "https://raw.githubusercontent.com/guim31/gladys-blocky/main/cover.png",
   "categories": ["network"],
